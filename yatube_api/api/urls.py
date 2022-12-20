@@ -10,7 +10,7 @@ router = SimpleRouter()
 router.register(r'posts', PostViewSet, basename='post')
 router.register(r'users', UserViewSet)
 router.register(r'groups', GroupViewSet)
-router.register('posts/<int:pk>/comments/', CommentViewSet, basename='comments')
+router.register(r'posts/(?P<post_id>\d+)/comments', CommentViewSet, basename='comment')
 
 urlpatterns = [
     path('api-token-auth/', views.obtain_auth_token),

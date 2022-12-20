@@ -25,7 +25,7 @@ class UserSerializer(serializers.ModelSerializer):
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
-        fields = ('title', 'slug', 'description', 'posts')
+        fields = ('id', 'title', 'slug', 'description', 'posts')
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -34,4 +34,4 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ('author', 'post', 'text', 'created')
+        fields = ('id', 'author', 'post', 'text', 'created')

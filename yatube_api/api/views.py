@@ -86,7 +86,8 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
 
-    def get_queryset(self, pk=None):
-        post = get_object_or_404(Post, id=pk)
+    def get_queryset(self):
+        post_id = self.kwargs.get('post_id')
+        new_queryset = Comment.objects.filter(post=post_id)
 
-        return post.comments.all()
+        return new_queryset
