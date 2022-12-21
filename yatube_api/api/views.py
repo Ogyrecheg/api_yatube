@@ -1,33 +1,22 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from django.shortcuts import get_object_or_404
+from posts.models import Comment, Group, Post, User
+from rest_framework import status, viewsets
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
-from django.shortcuts import get_object_or_404
-
-from .serializers import PostSerializer, UserSerializer, GroupSerializer, CommentSerializer
-from posts.models import Post, User, Group, Comment
+from .serializers import (CommentSerializer, GroupSerializer, PostSerializer,
+                          UserSerializer)
 
 
 class PostViewSet(viewsets.ModelViewSet):
-    def list(self, request):
-        queryset = Post.objects.all()
-        serializer = PostSerializer(queryset, many=True)
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
 
-        return Response(serializer.data)
-
-    def create(self, request):
-        queryset = Post.objects.all()
-        serializer = PostSerializer(request.data)
-        if serializer.is_valid():
-            serializer.save(author=request.user)
-
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
     def retrieve(self, request, pk=None):
-        queryset = Post.objects.all()
-        post = get_object_or_404(queryset, id=pk)
+        post = get_object_or_404(self.queryset, id=pk)
         serializer = PostSerializer(post)
 
         return Response(serializer.data)
@@ -91,3 +80,24 @@ class CommentViewSet(viewsets.ModelViewSet):
         new_queryset = Comment.objects.filter(post=post_id)
 
         return new_queryset
+
+    def perform_create(self, serializer):
+        post = get_object_or_404(Post, id=self.kwargs.get('post_id'))
+        serializer.save(author=self.request.user, post=post)
+
+    def perform_update(self, serializer):
+        if serializer.instance.author != self.request.user:
+            raise PermissionDenied('Изменение чужого контента запрещено!')
+        super(CommentViewSet, self).perform_update(serializer)
+
+    def destroy(self, request, post_id=None, pk=None):
+        post = get_object_or_404(Post, id=post_id)
+        comment = post.comments.get(id=pk)
+
+        if request.user != comment.author:
+
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        comment.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
